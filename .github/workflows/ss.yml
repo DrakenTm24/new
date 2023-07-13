@@ -1,0 +1,48 @@
+name: SSHTOr
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update OS
+        run: sudo apt-get update -y && sudo apt-get upgrade -y > /dev/null 2>&1 && sudo apt-get -y install wget curl nano git xz-utils openssh-server build-essential net-tools dialog apt-utils libevent* libsecret* > /dev/null 2>&1
+      - name: Install SSH
+        run: |
+          sudo sed -i 's\#PermitRootLogin prohibit-password\PermitRootLogin yes\ ' /etc/ssh/sshd_config
+          sudo sed -i 's\#PubkeyAuthentication yes\PubkeyAuthentication yes\ ' /etc/ssh/sshd_config
+          sudo service sshd start
+      - name: Install TOR
+        run: |
+          wget https://deb.torproject.org/torproject.org/pool/main/t/tor/tor_0.4.7.13-1~jammy+1_amd64.deb
+          sudo dpkg -i tor_0.4.7.13-1~jammy+1_amd64.deb
+          sudo sed -i 's\#SocksPort 9050\SocksPort 9052\ ' /etc/tor/torrc
+          sudo sed -i 's\#ControlPort 9051\ControlPort 9053\ ' /etc/tor/torrc
+          sudo sed -i 's\#HashedControlPassword\HashedControlPassword\ ' /etc/tor/torrc
+          sudo sed -i 's\#CookieAuthentication 1\CookieAuthentication 1\ ' /etc/tor/torrc
+          sudo sed -i 's\#HiddenServiceDir /var/lib/tor/hidden_service/\HiddenServiceDir /var/lib/tor/hidden_service/\ ' /etc/tor/torrc
+          sudo sed -i '72s\#HiddenServicePort 80 127.0.0.1:80\HiddenServicePort 12345 127.0.0.1:12345\ ' /etc/tor/torrc
+          sudo sed -i '73s\#HiddenServicePort 22 127.0.0.1:22\HiddenServicePort 22 127.0.0.1:22\ ' /etc/tor/torrc
+          sudo sed -i '74 i HiddenServicePort 8080 127.0.0.1:8080' /etc/tor/torrc
+          sudo sed -i '75 i HiddenServicePort 4000 127.0.0.1:4000' /etc/tor/torrc
+          sudo sed -i '76 i HiddenServicePort 8000 127.0.0.1:8000' /etc/tor/torrc
+          sudo sed -i '77 i HiddenServicePort 9000 127.0.0.1:9000' /etc/tor/torrc
+      - name: Add PWD
+        run: yes AliAly032230 | sudo passwd
+      - name: Add USER
+        run: |
+          sudo useradd -m SHAKUGAN
+          yes AliAly032230 | sudo passwd SHAKUGAN
+          sudo usermod -aG sudo SHAKUGAN
+      - name: Run TOR
+        run: |
+          sudo tor >> tor.log &
+          sleep 1m
+          sudo cat tor.log
+      - name: Run SSHTOr
+        run: |
+          sudo cat /var/lib/tor/hidden_service/hostname
+      - name: Loop
+        run: |
+          sleep 90d
