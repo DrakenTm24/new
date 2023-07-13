@@ -1,0 +1,23 @@
+name: Tmate SSH
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up tmate SSH
+        id: tmate-ssh
+        run: |
+          curl -LJO https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz
+          tar -xf tmate-2.4.0-static-linux-amd64.tar.xz
+          ./tmate-2.4.0-static-linux-amd64/tmate -F > ssh_url.txt
+          cat ssh_url.txt
+
+      - name: Display SSH URL
+        run: |
+          echo "SSH URL: $(cat ssh_url.txt)"
