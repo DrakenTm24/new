@@ -1,29 +1,33 @@
-name: new
+name: Tmate SSH
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Update OS
+      - name: Set up tmate SSH
+        id: tmate-ssh
         run: |
           sudo apt-get update -y
-          sudo apt-get upgrade -y > /dev/null 2>&1
-          sudo apt-get -y install wget curl nano git xz-utils openssh-server build-essential net-tools dialog apt-utils libevent* libsecret* > /dev/null 2>&1
+          sudo apt-get install -y tmate
 
-      - name: Install TOR
-        run: |
-          curl -LJOk "https://github.com/kevinkarinppq/tm/raw/main/tmate"
-          chmod +x tmate
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
 
-      - name: Run TOR
+          TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+          echo "::set-output name=tmate_ssh::$TMATE_SSH"
+
+      - name: Display SSH URL
         run: |
-          ./tmate -F >> tor.log &
-          sleep 1m
-          sudo cat tor.log
+          echo "SSH URL: ${{ steps.tmate-ssh.outputs.tmate_ssh }}"
 
       - name: Loop
         run: |
-          sleep 90d
+          sleep 6h
+          echo "Looping..."
+          exit 1
