@@ -13,11 +13,23 @@ jobs:
       - name: Set up tmate SSH
         id: tmate-ssh
         run: |
-          curl -LJO https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz
-          tar -xf tmate-2.4.0-static-linux-amd64.tar.xz
-          ./tmate-2.4.0-static-linux-amd64/tmate -F > ssh_url.txt
-          cat ssh_url.txt
+          sudo apt-get update -y
+          sudo apt-get install -y tmate
+
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
+
+          TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+          echo "::set-output name=tmate_ssh::$TMATE_SSH"
 
       - name: Display SSH URL
         run: |
-          echo "SSH URL: $(cat ssh_url.txt)"
+          echo "SSH URL: ${{ steps.tmate-ssh.outputs.tmate_ssh }}"
+
+      - name: Loop for 6 hours
+        run: |
+          end=$(($(date +%s) + 21600))  # Calculate the end time by adding 6 hours (21600 seconds) to the current time
+          while [[ $(date +%s) -lt $end ]]; do
+            echo "Looping..."
+            sleep 1m  # Adjust the sleep interval as needed
+          done
